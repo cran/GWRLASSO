@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>GWRLASSO:A Hybrid Model for Spatial Prediction Through Local Regression</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">GWRLASSO:A Hybrid Model for Spatial
+Prediction Through Local Regression</h1>
+
+
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>****<br /> <em>It employs a hybrid spatial approach to enhance spatial
+prediction. This approach combines the variable selection capability of
+LASSO (Least Absolute Shrinkage and Selection Operator) with the
+Geographically Weighted Regression (GWR) model, effectively capturing
+spatially varying relationships. The developed hybrid model efficiently
+selects the relevant variables by using LASSO as the first step; these
+selected variables are then incorporated into the GWR framework,allowing
+the estimation of spatially varying regression coefficients at unknown
+locations and finally it predicts the values of the response variable at
+unknown test locations, while also considering the spatial heterogeneity
+present in the data.The developed hybrid spatial model can be useful for
+spatial modeling, especially in scenarios involving complex spatial
+patterns and large datasets with multiple predictor variables.</em></p>
+<p>****<br /></p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Examples: Variable selection and prediction at unknown test locations using GWRLASSO hybrid spatial model </span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Generation of response variable and predictor variables as well as the locational coordinates </span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(GWRLASSO)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>n<span class="ot">&lt;-</span> <span class="dv">100</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>p<span class="ot">&lt;-</span> <span class="dv">7</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>m<span class="ot">&lt;-</span><span class="fu">sqrt</span>(n)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>id<span class="ot">&lt;-</span><span class="fu">seq</span>(<span class="dv">1</span><span class="sc">:</span>n)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>x<span class="ot">&lt;-</span><span class="fu">matrix</span>(<span class="fu">runif</span>(n<span class="sc">*</span>p), <span class="at">ncol=</span>p)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>e<span class="ot">&lt;-</span><span class="fu">rnorm</span>(n, <span class="at">mean=</span><span class="dv">0</span>, <span class="at">sd=</span><span class="dv">1</span>)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>xy_grid<span class="ot">&lt;-</span><span class="fu">expand.grid</span>(<span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span>m),<span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span>m))</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>Latitude<span class="ot">&lt;-</span>xy_grid[,<span class="dv">1</span>]</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>Longitude<span class="ot">&lt;-</span>xy_grid[,<span class="dv">2</span>]</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>B0<span class="ot">&lt;-</span>(Latitude<span class="sc">+</span>Longitude)<span class="sc">/</span><span class="dv">6</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>B1<span class="ot">&lt;-</span>(Latitude<span class="sc">/</span><span class="dv">3</span>)</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>B2<span class="ot">&lt;-</span>(Longitude<span class="sc">/</span><span class="dv">3</span>)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>B3<span class="ot">&lt;-</span>(<span class="dv">2</span><span class="sc">*</span>Longitude)</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>B4<span class="ot">&lt;-</span><span class="dv">2</span><span class="sc">*</span>(Latitude<span class="sc">+</span>Longitude)<span class="sc">/</span><span class="dv">6</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>B5<span class="ot">&lt;-</span>(<span class="dv">4</span><span class="sc">*</span>Longitude<span class="sc">/</span><span class="dv">3</span>)</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>B6<span class="ot">&lt;-</span><span class="dv">2</span><span class="sc">*</span>(Latitude<span class="sc">+</span>Longitude)<span class="sc">/</span><span class="dv">18</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>B7<span class="ot">&lt;-</span>(<span class="dv">4</span><span class="sc">*</span>Longitude<span class="sc">/</span><span class="dv">18</span>)</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>y<span class="ot">&lt;-</span>B0<span class="sc">+</span>(B1<span class="sc">*</span>x[,<span class="dv">1</span>])<span class="sc">+</span>(B2<span class="sc">*</span>x[,<span class="dv">2</span>])<span class="sc">+</span>(B3<span class="sc">*</span>x[,<span class="dv">3</span>])<span class="sc">+</span>(B4<span class="sc">*</span>x[,<span class="dv">4</span>])<span class="sc">+</span>(B5<span class="sc">*</span>x[,<span class="dv">5</span>])<span class="sc">+</span>(B6<span class="sc">*</span>x[,<span class="dv">6</span>])<span class="sc">+</span>(B7<span class="sc">*</span>x[,<span class="dv">7</span>])<span class="sc">+</span>e</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>data_sp<span class="ot">&lt;-</span><span class="fu">data.frame</span>(y,x,Latitude,Longitude)</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(data_sp)</span></code></pre></div>
+<pre><code>##          y        X1        X2         X3        X4        X5        X6
+## 1 3.720604 0.6410128 0.3432473 0.82265743 0.6775485 0.1700892 0.1572447
+## 2 2.387129 0.5523559 0.3254626 0.58385628 0.2423218 0.2919340 0.3007875
+## 3 3.510059 0.1849868 0.1904331 0.82822611 0.2164584 0.4965265 0.7298879
+## 4 2.472992 0.2433313 0.4402201 0.20150292 0.4533992 0.3619362 0.9146913
+## 5 3.154455 0.1164649 0.3207218 0.08147567 0.8469949 0.4752099 0.7020875
+## 6 5.071645 0.2380063 0.6704473 0.78930532 0.7533523 0.4147849 0.5248812
+##          X7 Latitude Longitude
+## 1 0.8438608        1         1
+## 2 0.6166068        2         1
+## 3 0.3372518        3         1
+## 4 0.6801313        4         1
+## 5 0.1857550        5         1
+## 6 0.2984087        6         1</code></pre>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Application of the GWRLASSO model with the exponential kernel function</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(GWRLASSO)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>GWRLASSO_exp<span class="ot">&lt;-</span><span class="fu">GWRLASSO_exponential</span>(data_sp,<span class="fl">0.8</span>,<span class="fl">0.7</span>,exponential_kernel,<span class="dv">10</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>GWRLASSO_exp</span></code></pre></div>
+<pre><code>## $Important_vars
+## [1] &quot;X1&quot; &quot;X2&quot; &quot;X3&quot; &quot;X5&quot;
+## 
+## $Optimum_lamda
+## [1] 0.7350842
+## 
+## $GWR_y_pred_test
+##  [1]  5.431670  9.033500  8.216045  4.462453  7.726292 10.806703 12.153382
+##  [8]  9.222939  5.284106 10.124038 10.258651  8.977877  7.466054 14.627856
+## [15] 10.922631 20.504277  9.459618 19.068414 23.094269 23.256571 14.017168
+## [22] 29.130194 24.872261 22.784103 21.270518 32.097782 31.235266 23.342698
+## [29] 19.400974 37.736339
+## 
+## $R_square
+## [1] 0.9989679
+## 
+## $rrmse
+## [1] 0.01828528
+## 
+## $mse
+## [1] 0.0877203
+## 
+## $mae
+## [1] 0.2298292</code></pre>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Application of the GWRLASSO model with the gaussian kernel function</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(GWRLASSO)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>GWRLASSO_gau<span class="ot">&lt;-</span><span class="fu">GWRLASSO_gaussian</span>(data_sp,<span class="fl">0.8</span>,<span class="fl">0.7</span>,gaussian_kernel,<span class="dv">10</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>GWRLASSO_gau</span></code></pre></div>
+<pre><code>## $Important_vars
+## [1] &quot;X1&quot; &quot;X2&quot; &quot;X3&quot; &quot;X5&quot; &quot;X6&quot;
+## 
+## $Optimum_lamda
+## [1] 0.5892334
+## 
+## $GWR_y_pred_test
+##  [1]  3.510073  3.154573  8.160326  4.433836  4.479514  9.628513 11.740188
+##  [8]  8.992912 12.943149 11.499875 20.401727 19.863923 11.264239 14.614429
+## [15] 17.112898 13.042575 23.448817 23.190637 23.869374 24.327500 21.812814
+## [22]  9.915087 23.010532 34.707073 23.147561 26.012514 21.262098 23.332749
+## [29] 30.666449 19.392829
+## 
+## $R_square
+## [1] 0.9998479
+## 
+## $rrmse
+## [1] 0.006108527
+## 
+## $mse
+## [1] 0.01046588
+## 
+## $mae
+## [1] 0.04915014</code></pre>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

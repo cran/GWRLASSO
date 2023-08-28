@@ -1,0 +1,59 @@
+---
+title: "GWRLASSO:A Hybrid Model for Spatial Prediction Through Local Regression"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{GWRLASSO:A Hybrid Model for Spatial Prediction Through Local Regression}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## Introduction
+****<br/>
+*It employs a hybrid spatial approach to enhance spatial prediction. This approach combines the variable selection capability of LASSO (Least Absolute Shrinkage and Selection Operator) with the Geographically Weighted Regression (GWR) model, effectively capturing spatially varying relationships. The developed hybrid model efficiently selects the relevant variables by using LASSO as the first step; these selected variables are then incorporated into the GWR framework,allowing the estimation of spatially varying regression coefficients at unknown locations and finally it predicts the values of the response variable at unknown test locations, while also considering the spatial heterogeneity present in the data.The developed hybrid spatial model can be useful for spatial modeling, especially in scenarios involving complex spatial patterns and large datasets with multiple predictor variables.*
+
+****<br/>
+
+
+``` {r}
+# Examples: Variable selection and prediction at unknown test locations using GWRLASSO hybrid spatial model 
+
+# Generation of response variable and predictor variables as well as the locational coordinates 
+
+library(GWRLASSO)
+n<- 100
+p<- 7
+m<-sqrt(n)
+id<-seq(1:n)
+x<-matrix(runif(n*p), ncol=p)
+e<-rnorm(n, mean=0, sd=1)
+xy_grid<-expand.grid(c(1:m),c(1:m))
+Latitude<-xy_grid[,1]
+Longitude<-xy_grid[,2]
+B0<-(Latitude+Longitude)/6
+B1<-(Latitude/3)
+B2<-(Longitude/3)
+B3<-(2*Longitude)
+B4<-2*(Latitude+Longitude)/6
+B5<-(4*Longitude/3)
+B6<-2*(Latitude+Longitude)/18
+B7<-(4*Longitude/18)
+y<-B0+(B1*x[,1])+(B2*x[,2])+(B3*x[,3])+(B4*x[,4])+(B5*x[,5])+(B6*x[,6])+(B7*x[,7])+e
+data_sp<-data.frame(y,x,Latitude,Longitude)
+head(data_sp)
+
+# Application of the GWRLASSO model with the exponential kernel function
+
+library(GWRLASSO)
+GWRLASSO_exp<-GWRLASSO_exponential(data_sp,0.8,0.7,exponential_kernel,10)
+GWRLASSO_exp
+
+# Application of the GWRLASSO model with the gaussian kernel function
+
+library(GWRLASSO)
+GWRLASSO_gau<-GWRLASSO_gaussian(data_sp,0.8,0.7,gaussian_kernel,10)
+GWRLASSO_gau
+```
+
+
+
+
